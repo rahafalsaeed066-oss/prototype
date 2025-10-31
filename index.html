@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>AED & Rescue Hub — Amman</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+
+<style>
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+}
+
+.logo-container img {
+  height: 180px; 
+  width: auto;   
+}
+
+.logo-container span {
+  font-size: 24px;
+  font-weight: 700;
+  color: #fff;
+}
+
+
+  /* -------- Body & Fonts -------- */
+  body { margin:0; font-family: Arial, sans-serif; background: linear-gradient(135deg,#f0f4ff,#e0ebff); color:#222; }
+  h1,h2,h3{ margin:0; }
+  p, .muted{ margin:0; color:#555; }
+
+  /* -------- Header -------- */
+  header { background:#0b1d4d; color:#fff; padding:1px 1px; text-align:center; box-shadow:0 2px 8px rgba(0,0,0,0.15); }
+  header img { height:36px; vertical-align:middle; margin-right:40px; }
+  nav{ display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin-top:1px; }
+  nav button{ background:transparent; color:white; border:none; padding:10px 18px; cursor:pointer; border-radius:8px; font-weight:600; transition:0.3s; }
+  nav button.active, nav button:hover{ background:rgba(255,255,255,0.15); }
+
+  /* -------- Container -------- */
+  .container{ max-width:1100px; margin:18px auto; padding:10px; }
+
+  /* -------- Map -------- */
+  #map, #map2{ height:420px; border-radius:12px; box-shadow:0 6px 18px rgba(0,0,0,0.15); }
+
+  /* -------- Status -------- */
+  .status{ display:flex; gap:12px; margin-top:16px; background:rgba(255,255,255,0.95); padding:14px; border-radius:10px; align-items:center; justify-content:space-between; }
+  .status .block{ flex:1; text-align:center; }
+  .heart{ font-size:28px; animation:pulse 2s infinite; color:#d63031; }
+  @keyframes pulse{ 0%{transform:scale(1);}50%{transform:scale(1.08);}100%{transform:scale(1);} }
+
+  /* -------- Buttons -------- */
+  .controls{text-align:center; margin-top:14px;}
+  .btn{ background:#1e3a8a; color:#fff; border:none; padding:10px 20px; border-radius:24px; cursor:pointer; margin:6px; font-weight:600; transition:0.3s; }
+  .btn:hover{ background:#374ac0; transform:scale(1.05); }
+
+  /* -------- Lists -------- */
+  .hospital-list{ margin-top:14px; background:#fff; padding:12px; border-radius:10px; max-height:260px; overflow:auto; box-shadow:0 4px 10px rgba(0,0,0,0.08); }
+  .hospital-item{ padding:10px; border-bottom:1px solid #eee; cursor:pointer; display:flex; justify-content:space-between; align-items:center; }
+  .hospital-item:hover{ background:#f0f4ff; }
+
+  /* -------- Alerts -------- */
+  .alert{ display:none; margin-top:12px; background:#ff4d6d; color:#fff; padding:10px; border-radius:8px; text-align:center; }
+
+  /* -------- Forms & Cards -------- */
+  .card{ background:#fff; padding:14px; margin:10px 0; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.08); }
+  input, select, textarea{ width:100%; padding:10px; margin:6px 0; border:1px solid #ccc; border-radius:8px; }
+
+  /* -------- Responsive -------- */
+  @media (max-width:720px){ #map,#map2{ height:320px; } .status{ flex-direction:column; gap:8px; } nav{ gap:6px; } }
+</style>
+</head>
+<body>
+
+<header>
+   <div class="logo-container">
+    <img src="C:\Users\leena\Desktop\prototype\2_20251030_082948_0001-removebg-preview.png" alt="Logo">
+    <span>AED & Rescue Hub</span>
+  </div>
+  <nav>
+    <button id="nav-home" class="active">Home</button>
+  
+    <button id="nav-register">Register Place</button>
+    <button id="nav-training">Training</button>
+    <button id="nav-ring">Life Ring</button>
+    <button id="nav-store">Store</button>
+    <button id="nav-donate">Donate</button>
+    <button id="nav-events">Events</button>
+  </nav>
+</header>
+
+<div class="container">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+ 
+  <div id="home" class="page" style="display:block;">
+    <p class="muted">Find nearest AEDs, check your heart rate, and connect your smart ring.</p>
+    <div id="map"></div>
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+
+<div class="status">
+  
+  <div class="block">
+    <i class="fas fa-heart" style="color:rgb(15, 23, 97); font-size:28px;"></i>
+    <div>Heart Rate: <strong id="hr-display">72 BPM</strong></div>
+  </div>
+
+  
+<div class="block">
+  <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1E3A8A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="10"/>
+    <circle cx="12" cy="12" r="4"/>
+  </svg>
+  <div>Ring: <strong id="ring-display">Disconnected</strong></div>
+</div>
+
+  
+  <div class="block">
+    <i class="fas fa-map-marker-alt" style="color:rgb(23, 15, 71); font-size:28px;"></i>
+    <div>Your Location: <span id="loc-display" class="muted">Unknown</span></div>
+  </div>
+</div>
+
+
+    <div class="controls">
+      <button id="connect-ring" class="btn">🔗 Connect Ring (simulate)</button>
+      <button id="emergency-call" class="btn">🚨 Confirm & Call Ambulance (simulate)</button>
+    </div>
+
+    <div id="alert-msg" class="alert">Alert! Calling ambulance... (simulated)</div>
+
+    <div class="hospital-list" id="hospital-list"></div>
+  </div>
+
+  <!-- ===== Map Page ===== -->
+  <div id="map-page" class="page" style="display:none;">
+    <h2 style="color:#0b1d4d">Interactive Map</h2>
+    <div id="map2"></div>
+  </div>
+
+  <!-- ===== Register Place ===== -->
+  <div id="register" class="page" style="display:none;">
+    <h2 style="color:#0b1d4d">Register Your Place</h2>
+    <div class="card">
+      <input type="text" placeholder="Place Name">
+      <input type="text" placeholder="Address / Location">
+      <input type="tel" placeholder="Contact Number">
+      <select>
+        <option value="">Type of Place</option>
+        <option>Clinic</option>
+        <option>School</option>
+        <option>Community Center</option>
+        <option>Other</option>
+      </select>
+      <button class="btn">Submit</button>
+    </div>
+  </div>
+
+  <!-- ===== Training ===== -->
+  <div id="training" class="page" style="display:none;">
+    <h2 style="color:#0b1d4d">Training & Awards</h2>
+    <div class="card"><strong>CPR & Rescue Training</strong><p>Sign up for basic life support courses.</p><button class="btn">Register</button></div>
+    <div class="card"><strong>Coach Rescue Diploma</strong><p>Professional rescue coaching program.</p><button class="btn">Enroll</button></div>
+    <div class="card"><strong>First Rescuer Award</strong><p>Recognition for heroism and lifesaving actions.</p><button class="btn">Apply</button></div>
+  </div>
+
+  <!-- ===== Life Ring ===== -->
+  <div id="ring" class="page" style="display:none;">
+    <h2 style="color:#0b1d4d">Life Ring</h2>
+    <div class="card">
+      <p>Connect your smart ring to monitor heart rate and trigger emergency alerts.</p>
+      <button id="connect-ring2" class="btn">Connect Ring</button>
+    </div>
+  </div>
+
+  <!-- ===== Store ===== -->
+  <div id="store" class="page" style="display:none;">
+    <h2 style="color:#0b1d4d">Store - AED & Accessories</h2>
+    <div class="card"><strong>AED Device</strong><p>Portable life-saving device.</p><button class="btn">Buy</button></div>
+    <div class="card"><strong>Accessories Kit</strong><p>Replacement pads, batteries, bag.</p><button class="btn">Buy</button></div>
+    <div class="card"><strong>First Aid Kit</strong><p>Complete emergency kit.</p><button class="btn">Buy</button></div>
+  </div>
+
+  <!-- ===== Donate ===== -->
+  <div id="donate" class="page" style="display:none;">
+    <h2 style="color:#0b1d4d">Donate</h2>
+    <div class="card"><strong>Orphanages</strong><button class="btn">Donate</button></div>
+    <div class="card"><strong>Schools</strong><button class="btn">Donate</button></div>
+    <div class="card"><strong>Senior Homes</strong><button class="btn">Donate</button></div>
+    <div class="card"><strong>Camps & Gaza</strong><button class="btn">Donate</button></div>
+  </div>
+
+  <!-- ===== Events ===== -->
+  <div id="events" class="page" style="display:none;">
+    <h2 style="color:#0b1d4d">Events & Webinars</h2>
+    <div class="card"><strong>Online Webinar</strong><p>Learn CPR & AED basics online.</p><button class="btn">Register</button></div>
+    <div class="card"><strong>Medical Day</strong><p>Free medical checkups and awareness.</p><button class="btn">Join</button></div>
+    <div class="card"><strong>Free Training</strong><p>Hands-on CPR and first aid training.</p><button class="btn">Sign Up</button></div>
+  </div>
+
+</div>
+
+<script>
+/* ---------- Fake AED Data ---------- */
+const aedLocations = [
+  { id:1, name: "AED - Abdali Mall", lat:31.9474, lng:35.9230 },
+  { id:2, name: "AED - Tla' Al Ali Clinic", lat:31.9530, lng:35.8830 },
+  { id:3, name: "AED - Jabal Amman Center", lat:31.9498, lng:35.9400 },
+  { id:4, name: "AED - Sweifieh Plaza", lat:31.9490, lng:35.8765 },
+  { id:5, name: "AED - Marka Community Ctr", lat:32.0010, lng:36.0380 },
+  { id:6, name: "AED - West Amman Market", lat:31.9605, lng:35.8862 },
+  { id:7, name: "AED - University Campus", lat:31.9522, lng:35.9108 },
+  { id:8, name: "AED - City Hospital", lat:31.9556, lng:35.9235 },
+  { id:9, name: "AED - Zahran Mall", lat:31.9680, lng:35.9115 },
+  { id:10, name: "AED - Community Center C", lat:31.9620, lng:35.9100 }
+];
+
+/* ---------- Haversine Formula ---------- */
+function haversineKm(lat1, lon1, lat2, lon2) {
+  function toRad(deg){ return deg * Math.PI / 180; }
+  const R = 6371;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2)) * Math.sin(dLon/2)**2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+}
+
+/* ---------- Map Initialization ---------- */
+let map;
+function initMap(mapId='map') {
+  const container = document.getElementById(mapId);
+  if (container._leaflet_id) return;
+  const center = [31.9539, 35.9106];
+  const m = L.map(mapId).setView(center,12);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{ attribution:'© OpenStreetMap contributors'}).addTo(m);
+
+  const aedIcon = L.divIcon({ html:'<div style="background:#1e3a8a;color:#fff;padding:6px 8px;border-radius:8px;font-weight:700;font-size:12px;">AED</div>', className:'', iconSize:[40,20], iconAnchor:[20,10] });
+
+  aedLocations.forEach(loc=>{
+    const marker = L.marker([loc.lat, loc.lng], {icon:aedIcon}).addTo(m);
+    marker.bindPopup(`<strong>${loc.name}</strong>`);
+    loc._marker = marker;
+  });
+
+  map = m;
+}
+initMap('map');
+initMap('map2');
+
+/* ---------- Geolocation & Lists ---------- */
+let userPos = null;
+function updateUserLocationDisplay(lat,lng){ document.getElementById('loc-display').textContent = `${lat.toFixed(5)}, ${lng.toFixed(5)}`; }
+
+function getUserLocationAndPopulate() {
+  if (!navigator.geolocation){ populateLists(null); return; }
+  navigator.geolocation.getCurrentPosition(pos=>{
+    userPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+    updateUserLocationDisplay(userPos.lat,userPos.lng);
+    if(map){
+      if(!window._userMarker){ window._userMarker=L.marker([userPos.lat,userPos.lng],{title:"You"}).addTo(map).bindPopup("Your Location"); }
+      else window._userMarker.setLatLng([userPos.lat,userPos.lng]);
+      map.setView([userPos.lat,userPos.lng],13);
+    }
+    populateLists(userPos);
+  }, err=>{ populateLists(null); }, {enableHighAccuracy:true, timeout:8000});
+}
+
+function populateLists(user){
+  const list1 = document.getElementById('hospital-list'); list1.innerHTML='';
+  const enriched = aedLocations.map(loc=>{
+    let distKm=null;
+    if(user) distKm = haversineKm(user.lat,user.lng,loc.lat,loc.lng);
+    const distMiles = distKm!=null?distKm*0.621371:null;
+    const walkingMin = distKm!=null?(distKm/5)*60:null;
+    const drivingMin = distKm!=null?(distKm/40)*60:null;
+    return {...loc,distKm,distMiles,walkingMin,drivingMin};
+  });
+  enriched.sort((a,b)=>{ if(a.distKm===null)return 1; if(b.distKm===null)return -1; return a.distKm-b.distKm; });
+  enriched.forEach(loc=>{
+    const distText = loc.distMiles!=null?`${loc.distMiles.toFixed(2)} miles`:'Distance unavailable';
+    const etaText = loc.walkingMin!=null?`Walk: ${Math.round(loc.walkingMin)} min • Drive: ${Math.round(loc.drivingMin)} min`:'';
+    const item = document.createElement('div');
+    item.className='hospital-item';
+    item.innerHTML=`<div><strong>${loc.name}</strong><div class="muted">${distText}</div></div>
+                    <div style="text-align:right"><div class="muted" style="font-size:13px">${etaText}</div>
+                    <div style="font-size:12px; margin-top:6px; color:#1e3a8a">Go</div></div>`;
+    item.addEventListener('click',()=>{
+      document.getElementById('nav-home').click();
+      if(map && loc._marker){
+        map.flyTo([loc.lat,loc.lng],16,{duration:1.6});
+        loc._marker.openPopup();
+        const popupHtml=`<strong>${loc.name}</strong><br>${distText}<br>${etaText}`;
+        loc._marker.setPopupContent(popupHtml).openPopup();
+      }
+    });
+    list1.appendChild(item);
+  });
+}
+
+/* ---------- Heart Rate Simulation ---------- */
+let hr=72;
+setInterval(()=>{
+  hr+=(Math.random()*8-4);
+  hr=Math.max(45,Math.min(140,hr));
+  document.getElementById('hr-display').textContent=Math.round(hr)+' BPM';
+  if(hr>130||hr<45){ document.getElementById('alert-msg').textContent='Warning: Abnormal heart rate detected (simulated)'; document.getElementById('alert-msg').style.display='block'; }
+  else{ document.getElementById('alert-msg').style.display='none'; document.getElementById('alert-msg').textContent='Alert! Calling ambulance... (simulated)'; }
+},2000);
+
+/* ---------- Buttons ---------- */
+document.getElementById('connect-ring').addEventListener('click',()=>{
+  document.getElementById('ring-display').textContent='Connected (simulated)';
+  alert('Ring connected (simulated). Heart-rate now comes from simulated sensor.');
+});
+document.getElementById('connect-ring2').addEventListener('click',()=>{
+  document.getElementById('ring-display').textContent='Connected (simulated)';
+  alert('Ring connected (simulated).');
+});
+
+document.getElementById('emergency-call').addEventListener('click',()=>{
+  if(!userPos){ alert('Enable location to allow calling ambulance (simulated).'); return; }
+  document.getElementById('alert-msg').style.display='block';
+  setTimeout(()=>{
+    alert('Ambulance called (simulated). Displaying nearest AED.');
+    const nearest=aedLocations.map(loc=>({...loc,dist:haversineKm(userPos.lat,userPos.lng,loc.lat,loc.lng)})).sort((a,b)=>a.dist-b.dist)[0];
+    if(nearest && nearest._marker){ map.flyTo([nearest.lat,nearest.lng],16); nearest._marker.openPopup(); }
+  },500);
+});
+
+/* ---------- Navigation ---------- */
+const navButtons = document.querySelectorAll('header nav button');
+const pages = document.querySelectorAll('.page');
+navButtons.forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    navButtons.forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const targetId = btn.id.replace('nav-','');
+    pages.forEach(p=>p.style.display=(p.id===targetId?'block':'none'));
+  });
+});
+
+/* ---------- Start ---------- */
+getUserLocationAndPopulate();
+</script>
+
+</body>
+</html>
+
+
+
+
